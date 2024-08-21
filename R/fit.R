@@ -26,13 +26,13 @@ fit <- function(stan_data, model = "blm", ...) {
   if (model == "blm") {
     message("Bayesian linear model")
     if (stan_data$K == 0) {
-      model <- im.models::blmnox
+      model <- stanmodels$blmnox
     } else {
-      model <- im.models::blm
+      model <- stanmodels$blm
     }
   } else {
     message("Bayesian negative binomial model")
-    model <- im.models::NB
+    model <- stanmodels$NB
   }
   # Fit the Stan model using the provided data and optional arguments.
   out <- rstan::sampling(model, data = stan_data, ...)

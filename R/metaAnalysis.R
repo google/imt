@@ -107,7 +107,7 @@ metaAnalysis <- R6::R6Class(
           sd_mu = sd_mu,
           run_estimation = run_estimation)
 
-        private$fit <- rstan::sampling(im.models::metaanalysisnox,
+        private$fit <- rstan::sampling(stanmodels$metaanalysisnox,
                                        data = stan_data,
                                        ...
         )
