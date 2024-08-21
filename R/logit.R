@@ -122,7 +122,7 @@ logit <- R6::R6Class(
       private$..tau_prior_mean <- tau_mean
       private$..stan_data <- stan_data
       # Draw from the prior
-      sim_out <- rstan::sampling(im.models::logit,
+      sim_out <- rstan::sampling(stanmodels$logit,
         data = private$..stan_data
       )
       stan_data$run_estimation <- 1
@@ -132,7 +132,7 @@ logit <- R6::R6Class(
       # Fit model
       if (fit) {
         message("Fitting model to the data")
-        private$..stanfit <- rstan::sampling(im.models::logit,
+        private$..stanfit <- rstan::sampling(stanmodels$logit,
           data = stan_data, ...
         )
         private$..mcmc_checks <- mcmcChecks$new(
