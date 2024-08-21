@@ -1,0 +1,126 @@
+---
+title: "Bayesian Negative Binomial Model"
+output: rmarkdown::html_vignette
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = TRUE
+)
+```
+
+## Introduction
+
+Suppose our outcome of interest is the number of views a YouTube creator
+receives in a given period. This presents a suitable scenario for utilizing the
+negative binomial distribution to model the underlying data-generating process.
+Specifically, we can express this as:
+
+$$
+\begin{aligned}
+y_i & \sim \text{NB}(\mu_i, \phi) \\
+log(\mu_i) & = \alpha + X\beta
+\end{aligned}
+$$
+
+Here, the parameter $$\mu$$ represents the mean, necessitating positivity.
+Hence, we employ a log link function to transform the linear predictor.
+ The inverse of the parameter $$\phi$$ controls the overdispersion.
+ A small $$\phi$$ results in significant deviations from a Poisson distribution
+ in the negative binomial distribution.
+ Conversely, as $$\phi$$ increases, the negative binomial aligns more closely
+ with a Poisson distribution. This is evident when looking at the variance:
+
+$$
+\begin{aligned}
+Var(y_i) & \sim \mu_i + \frac{\mu_i^2}{\phi}
+\end{aligned}
+$$
+
+## An example using fake data
+
+```{r, message=FALSE, warning=FALSE}
+set.seed(9782)
+library(dplyr)
+library(ggplot2)
+N <- 1000
+
+fake_data <-
+  tibble::tibble(x1 = runif(N, 2, 9), x2 = rnorm(N, 0, 1)) %>%
+  dplyr::mutate(
+    mu = exp(0.5 + 1.7 * x1 + 4.2 * x2),
+    y0 = rnbinom(N, size = 2, mu = mu), # here size is phi
+    y1 = y0 * 1.05,
+    t = sample(c(TRUE, FALSE), size = n(), replace = TRUE, prob = c(0.5, 0.5)),
+    y = case_when(t ~ as.integer(y1),
+      .default = as.integer(y0)
+    )
+  ) %>%
+  filter(y > 0)
+
+# Plotting the histogram using ggplot2
+ggplot(fake_data, aes(x = y)) +
+  geom_histogram(
+    bins = 100,
+    color = "black",
+    alpha = 0.7
+  ) +
+  facet_wrap(~t) +
+  labs(title = "Histogram of y", x = "y", y = "Frequency") +
+  xlim(0, 1e4) +
+  ylim(0, 20)
+```
+
+### Fitting OLS
+
+A common practice for estimating the lift of this intervention is running OLS
+ on the natural logarithm of the outcome. Then people tend to look at the
+ point estimate and 95% confidence interval for the treatment effect.
+ After doing this, most people would conclude that the intervention is
+ ineffective, as its 95% confidence interval includes zero.
+
+```{r}
+lm(data = fake_data, log(y) ~ x1 + x2 + t) %>% broom::tidy(conf.int = TRUE)
+```
+
+### Fitting the Bayesian Negative Binomial Model
+
+Using this package, you can easily fit a Bayesian negative binomial model.
+ This has two advantages over the previous approach. First, we are fitting a
+ model that better captures the true data generating process. Second, we are
+ fitting a Bayesian model that allows us to incorporate prior information, and
+ express our findings in a way that can answer business questions more directly.
+
+```{r}
+library(im)
+nb <- negativeBinomial$new(
+  data = fake_data, y = "y", x = c("x1", "x2"),
+  treatment = "t", tau_mean = 0.0, tau_sd = 0.025
+)
+```
+
+After doing this, it is good practice to check the trace plot:
+
+```{r}
+nb$tracePlot()
+```
+
+You can get a point estimate for the impact by using the
+ `nb$pointEstimate()`  method (`r scales::percent(nb$pointEstimate())`).
+ Similarly, you can get a 95% credible interval by using The
+ `nb$credibleInterval(width = 0.95, round = 2)` method
+ (`r nb$credibleInterval(width = 0.95, round = 2)`). However, these are not
+ particularly useful if you want to know how likely is that the impact is at
+ least 1% (or any other relevant threshold for informing a decision).
+ Luckily, you can easily calculate that probability by using
+ `nb$posteriorProb(threshold = 0.01)`
+ (`r nb$posteriorProb(threshold = 0.01)`). Finally, you can
+ visualize the posterior and prior distribution with `nb$vizdraws()`.
+
+---
+
+#### im
+
+Licensed under the Apache License, Version 2.0.\

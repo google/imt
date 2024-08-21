@@ -1,0 +1,210 @@
+---
+title: "Bayesian Logit Model"
+output: rmarkdown::html_vignette
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = TRUE
+)
+```
+
+## Motivation
+
+
+Let's consider a scenario where we aim to estimate the impact of an
+ informational nudge on whether or not users adopt a feature. To do this,
+ we can use  a Bayesian logistic model. This type of generalized linear model
+ uses a logit link function and is formulated as follows:
+
+$$
+\text{BernoulliLogit}(y|\theta) = \text{Bernoulli}(y|\text{logit}^{-1}(\theta))
+$$
+
+where
+
+$$
+\text{logit}^{-1}(\theta) = \frac{1}{1 + \exp(-\theta)}
+$$
+
+
+```{r inverse_logit, fig.align = 'center'}
+library(ggplot2)
+library(tibble)
+library(dplyr)
+library(im)
+
+inv_logit <- function(theta) {
+  return(1 / (1 + exp(-theta)))
+}
+
+ggplot2::ggplot() +
+  ggplot2::stat_function(fun = inv_logit) +
+  ggplot2::theme_minimal() +
+  ggplot2::xlim(-5, 5) +
+  ggplot2::xlab(expression(theta))
+```
+
+## Demonstration
+
+First, we will create some fake data.
+
+```{r fake_data}
+# Fake data
+N <- 2000
+K <- 2
+set.seed(1982)
+fake_data <- tibble::tibble(
+  x1 = rnorm(N, mean = 0, sd = 1),
+  x2 = rnorm(N, mean = 0, sd = 1),
+  treat = sample(
+    x = c(TRUE, FALSE), size = N, replace = TRUE,
+    prob = c(0.5, 0.5)
+  ),
+  r = runif(n = N, min = 0, max = 1)
+) %>%
+  dplyr::mutate(
+    p0 = inv_logit(theta = -3 + 0.1 * x1 + 0.25 * x2),
+    p1 = inv_logit(theta = -3 + 0.1 * x1 + 0.25 * x2 + 0.2),
+    y0 = dplyr::case_when(p0 > r ~ 1, TRUE ~ 0),
+    y1 = dplyr::case_when(p1 > r ~ 1, TRUE ~ 0),
+    y = dplyr::case_when(
+      treat ~ as.logical(y1),
+      TRUE ~ as.logical(y0)
+    )
+  )
+dplyr::glimpse(fake_data)
+mean_y0 <- mean(fake_data$y0)
+mean_y1 <- mean(fake_data$y1)
+impact <- round((mean(fake_data$y1) - mean(fake_data$y0)) * 100, 2)
+```
+
+In this fake data set we know that in a universe without the intervention
+  only `r scales::percent(mean_y0)` would have adopted this feature,
+  and if everyone had received the intervention `r scales::percent(mean_y1)`
+  would have done it. That is, the true impact of this intervention is
+  `r impact` percentage points.
+
+### Prior predictive checking
+
+Because we are using a Bayesian model, it is important to carefully consider
+ what the priors imply about what we expect to see. In particular, our model
+ is written as:
+
+$$
+\begin{aligned}
+\theta &=  \alpha + X \beta + \tau  T \\
+\alpha & \sim N(\mu_{\alpha}, sd_{\alpha}) \\
+\beta_j & \sim N(\mu_{\beta_j}, sd_{\beta_j}) \\
+\tau & \sim N(\mu_{\tau}, sd_{\tau})
+\end{aligned}
+$$
+
+```{r priors_check, fig.align = 'center'}
+logit <- im::logit$new(
+  data = fake_data,
+  y = "y", # this will not be used
+  treatment = "treat",
+  x = c("x1", "x2"),
+  mean_alpha = -3,
+  sd_alpha = 2,
+  mean_beta = c(0, 0),
+  sd_beta = c(1, 1),
+  tau_mean = 0.05,
+  tau_sd = 0.5,
+  fit = FALSE # we will not be fitting the model
+)
+
+logit$plotPrior()
+```
+### Fitting model to the data
+
+Once we are satisfied that our priors are reasonable, we can fit the model to
+  the data as follows:
+
+```{r fit, fig.align = 'center'}
+logit <- im::logit$new(
+  data = fake_data,
+  y = "y",
+  treatment = "treat",
+  x = c("x1", "x2"),
+  mean_alpha = -3,
+  sd_alpha = 2,
+  mean_beta = c(0, 0),
+  sd_beta = c(1, 1),
+  tau_mean = 0.05,
+  tau_sd = 0.5,
+  fit = TRUE
+)
+```
+
+We can look at the trace plot of tau to see if the chains mixed and converged:
+
+```{r tracePlot, fig.align = 'center'}
+logit$tracePlot()
+```
+
+We can use the following methods to summarize our findings:
+
+```{r findings, fig.align = 'center'}
+logit$pointEstimate()
+logit$credibleInterval(width = 0.95)
+logit$calcProb(a = 0)
+```
+
+We can also use the prediction function to predict new data and compare the
+  differences between groups. The `predict` function takes the `new_data` and
+  `name` argument to name the group.
+For example, here we will predict the data as if all units are treated, then
+  make another prediction as if all units are not treated and summarize the two
+  groups.
+
+```{r predSummary}
+fake_treated_data <- fake_data %>% mutate(treat = TRUE)
+fake_control_data <- fake_data %>% mutate(treat = FALSE)
+logit$predict(
+  new_data = fake_treated_data,
+  name = "y1"
+)
+logit$predict(
+  new_data = fake_control_data,
+  name = "y0"
+)
+logit$predSummary(name = "y1", width = 0.95, a = 0)
+logit$predSummary(name = "y0", width = 0.95, a = 0)
+```
+
+We can also compare the differences between two groups of predictions.
+```{r predCompare}
+logit$predCompare(name1 = "y1", name2 = "y0", width = 0.95, a = 0)
+```
+
+We can also summarize and compare the predictions conditioning on subgroups.
+```{r subgroup}
+logit$predSummary(
+  name = "y1",
+  subgroup = (fake_data$x1 > 0),
+  width = 0.95, a = 0
+)
+logit$predCompare(
+  name1 = "y1",
+  name2 = "y0",
+  subgroup1 = (fake_treated_data$x1 > 0),
+  subgroup2 = (fake_control_data$x1 > 0),
+  width = 0.95, a = 0
+)
+```
+
+Finally, we can get the posterior predictive draws for advanced analysis.
+```{r getPred}
+pred <- logit$getPred(name = "y1")
+```
+
+---
+
+#### im
+
+Licensed under the Apache License, Version 2.0.\
+
