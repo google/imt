@@ -10,7 +10,7 @@ Checks convergence, mixing, effective sample size, and divergent transitions
 \section{Methods}{
 
 \describe{
-\item{\code{$new(fit, par)}}{Runs diagnostics on the supplied \code{stanfit}
+\item{\code{$new(fit, pars)}}{Runs diagnostics on the supplied \code{stanfit}
 object, restricted to parameters identified by the character vector
 \code{pars}.
 \cr Tests include:
@@ -52,10 +52,20 @@ maximum treedepth. If more than 25\\% of iterations maxed out,
 \if{html}{\out{<a id="method-mcmcChecks-new"></a>}}
 \if{latex}{\out{\hypertarget{method-mcmcChecks-new}{}}}
 \subsection{Method \code{new()}}{
+Initialize a new mcmcChecks object and run diagnostics
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{mcmcChecks$new(fit, pars)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{fit}}{A stanfit object to check}
+
+\item{\code{pars}}{A character vector of parameter names to check}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-mcmcChecks-clone"></a>}}

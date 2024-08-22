@@ -38,27 +38,30 @@ metaAnalysis <- R6::R6Class(
     PosteriorATE = function() {
       return(private$mu_draws)
     },
+    #' @field checks MCMC diagnostics
     checks = function() {
       return(private$mcmc_checks)
     },
+    #' @field CredibleInterval Lower and upper bounds of the credible interval
     CredibleInterval = function() {
       return(c(private$lower_bound, private$upper_bound))
     },
+    #' @field PointEstimate Point estimate of the average treatment effect
     PointEstimate = function() {
       return(mean(private$mu_draws))
     },
+    #' @field fitted Stan fit object
     fitted = function() {
       return(private$fit)
     }
   ),
   public = list(
-
     #' @description
     #' Create a new meta analysis object.
     #' @param data Data frame with data point estimates and standard
     #'   errors from studies.
     #' @param point_estimates Name of the variable in the data frame that
-    # `   contains the point estimates.
+    #'   contains the point estimates.
     #' @param standard_errors Name of the variable in the data frame that
     #'   contains the standard errors of the point estimates.
     #' @param id Name of the variable in the data frame that contains the
@@ -67,8 +70,9 @@ metaAnalysis <- R6::R6Class(
     #' @param sd_mu Prior mean for the standard deviation of the
     #'   true lift in the population.
     #' @param ci_width Credible interval's width.
-    #' @param ... other arguments passed to [rstan::sampling()]
     #' @param X Covariates matrix.
+    #' @param run_estimation Integer flag to control whether estimation is run (1) or not (0).
+    #' @param ... other arguments passed to [rstan::sampling()]
     #' @return A new `meta_analysis` object.
     initialize = function(data, point_estimates, standard_errors, id,
                           mean_mu = 0.0, sd_mu = 0.05, ci_width = 0.75,

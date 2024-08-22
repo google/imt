@@ -9,7 +9,7 @@ Authors@R:
            comment = c(ORCID = "0000-0002-3721-8172"))
 Description: A simple causal inference tool for impact measurement created
   by YouTube's Impact Measurement Team.
-License: Apache License (== 2.0)
+License: Apache License (>= 2.0)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
@@ -32,7 +32,10 @@ Imports:
     rstantools,
     tibble,
     tidyr,
-    vizdraws
+    vizdraws,
+    purrr,
+    scales,
+    tidyselect
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),
@@ -43,5 +46,6 @@ LinkingTo:
 Suggests:
     knitr,
     rmarkdown,
-    roxygen2
+    roxygen2,
+    testthat
 SystemRequirements: GNU make

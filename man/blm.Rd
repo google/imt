@@ -13,6 +13,12 @@ Bayesian Linear Model Factory
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
 \item{\code{version}}{im package version used to fit model}
+
+\item{\code{eta_draws}}{Posterior draws for the treatment effect}
+
+\item{\code{mcmChecks}}{MCMC diagnostics}
+
+\item{\code{credible_interval}}{Credible interval for the treatment effect}
 }
 \if{html}{\out{</div>}}
 }
@@ -35,6 +41,18 @@ Bayesian Linear Model Factory
 \if{html}{\out{<a id="method-blm-new"></a>}}
 \if{latex}{\out{\hypertarget{method-blm-new}{}}}
 \subsection{Method \code{new()}}{
+Get the package version
+
+
+Get the posterior draws for eta
+
+
+Get the MCMC diagnostics
+
+
+Get the credible interval
+
+
 Create a new Bayesian Linear Model object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{blm$new(
@@ -89,6 +107,13 @@ overlay plot using the \code{bayesplot::ppc_dens_overlay} function.
 \if{html}{\out{<div class="r">}}\preformatted{blm$ppcDensOverlay(n = 50)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{n}}{Number of posterior draws to use for the overlay}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
 ggplot2 visualization
 }

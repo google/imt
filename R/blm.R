@@ -16,6 +16,9 @@
 #' @docType class
 #' @export
 #' @field version im package version used to fit model
+#' @field eta_draws Posterior draws for the treatment effect
+#' @field mcmChecks MCMC diagnostics
+#' @field credible_interval Credible interval for the treatment effect
 
 blm <- R6::R6Class(
   classname = "blm",
@@ -32,15 +35,19 @@ blm <- R6::R6Class(
     ..y_sd = NULL
   ),
   active = list(
+    #' @description Get the package version
     version = function() {
       return(private$..version)
     },
+    #' @description Get the posterior draws for eta
     eta_draws = function() {
       return(private$..eta_draws)
     },
+    #' @description Get the MCMC diagnostics
     mcmChecks = function() {
       return(private$..mcmc_checks)
     },
+    #' @description Get the credible interval
     credible_interval = function() {
       return(private$..credible_interval)
     }
@@ -49,10 +56,10 @@ blm <- R6::R6Class(
     #' @description
     #' Create a new Bayesian Linear Model object.
     #'
+    #' @param data Data frame to be used
     #' @param y Name of the outcome variable in the data frame
     #' @param x Vector of names of all covariates in the data frame
     #' @param treatment Name of the treatment indicator variable in the data frame
-    #' @param data Data frame to be used
     #' @param eta_mean Prior mean for the treatment effect estimation
     #' @param eta_sd Prior standard deviation for the treatment effect estimation
     #' @param generate_fake_data Flag for generating fake data
@@ -105,6 +112,7 @@ blm <- R6::R6Class(
     #' to the distributions of simulated/replicated data 'yrep' from the
     #' posterior predictive distribution. This is done by creating a density
     #' overlay plot using the `bayesplot::ppc_dens_overlay` function.
+    #' @param n Number of posterior draws to use for the overlay
     #' @return ggplot2 visualization
     ppcDensOverlay = function(n = 50) {
       y_sim <- as.data.frame(private$..stanfit, pars = "y_sim")

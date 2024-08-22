@@ -14,6 +14,9 @@
 
 #' Fits Stan model.
 #' @param stan_data A named list providing the data for the Stan model.
+#' @param model A character string specifying the model type. 
+#'   Must be either "blm" (Bayesian linear model) or "bnb" (Bayesian negative binomial model).
+#'   Defaults to "blm".
 #' @param ... Additional options to be passed through to `rstan::sampling`.
 #' @return The complete StanFit object from the fitted Stan model.
 #' @export

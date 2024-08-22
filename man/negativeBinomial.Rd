@@ -3,16 +3,22 @@
 \docType{class}
 \name{negativeBinomial}
 \alias{negativeBinomial}
-\title{Bayesian Linear Model Factory}
+\title{Bayesian Negative Binomial Model Factory}
 \description{
-Bayesian Linear Model Factory
+Bayesian Negative Binomial Model Factory
 
-Bayesian Linear Model Factory
+Bayesian Negative Binomial Model Factory
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{version}}{im package version used to fit model}
+\item{\code{version}}{Package version used to fit the model}
+
+\item{\code{mcmChecks}}{MCMC diagnostics}
+
+\item{\code{credible_interval}}{Credible interval for the treatment effect}
+
+\item{\code{tau_draws}}{Posterior draws for the treatment effect}
 }
 \if{html}{\out{</div>}}
 }
@@ -61,6 +67,8 @@ Create a new Bayesian Negative Binomial Model object.
 \item{\code{tau_mean}}{Prior mean for the treatment effect estimation}
 
 \item{\code{tau_sd}}{Prior standard deviation for the treatment effect estimation}
+
+\item{\code{run_estimation}}{Integer flag to control whether estimation is run (1) or not (0)}
 
 \item{\code{seed}}{Seed for Stan fitting}
 

@@ -9,6 +9,10 @@ fit(stan_data, model = "blm", ...)
 \arguments{
 \item{stan_data}{A named list providing the data for the Stan model.}
 
+\item{model}{A character string specifying the model type.
+Must be either "blm" (Bayesian linear model) or "bnb" (Bayesian negative binomial model).
+Defaults to "blm".}
+
 \item{...}{Additional options to be passed through to \code{rstan::sampling}.}
 }
 \value{

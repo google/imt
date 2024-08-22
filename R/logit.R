@@ -15,7 +15,16 @@
 #' @title Bayesian Logit Model Factory
 #' @docType class
 #' @export
+#' @description A class for creating and managing Bayesian Logit Models
 #' @field version im package version used to fit model
+#' @field tau_draws Posterior draws for the treatment effect
+#' @field mcmChecks MCMC diagnostics
+#' @field credible_interval Credible interval for the treatment effect
+#' @field prior_eta Prior distribution for eta
+#' @field prior_tau Prior distribution for tau
+#' @field prior_mean_y Prior distribution for mean y
+#' @field eta_draws Posterior draws for eta
+#' @field predict_list List of predictions
 
 logit <- R6::R6Class(
   classname = "logit",
@@ -42,30 +51,39 @@ logit <- R6::R6Class(
     ..predictions = NULL
   ),
   active = list(
+    #' @description Get the package version
     version = function() {
       return(private$..version)
     },
+    #' @description Get the posterior draws for tau
     tau_draws = function() {
       return(private$..tau_draws)
     },
+    #' @description Get the MCMC diagnostics
     mcmChecks = function() {
       return(private$..mcmc_checks)
     },
+    #' @description Get the credible interval
     credible_interval = function() {
       return(private$..credible_interval)
     },
+    #' @description Get the prior for eta
     prior_eta = function() {
       return(private$..prior_eta)
     },
+    #' @description Get the prior for tau
     prior_tau = function() {
       return(private$..prior_tau)
     },
+    #' @description Get the prior for mean y
     prior_mean_y = function() {
       return(private$..prior_mean_y)
     },
+    #' @description Get the posterior draws for eta
     eta_draws = function() {
       return(private$..eta_draws)
     },
+    #' @description Get the list of predictions
     predict_list = function() {
       return(private$..predict_list)
     }
@@ -74,14 +92,18 @@ logit <- R6::R6Class(
     #' @description
     #' Create a new Bayesian Logit Model object.
     #'
+    #' @param data Data frame to be used
     #' @param y Name of the outcome variable in the data frame
     #' @param x Vector of names of all covariates in the data frame
     #' @param treatment Name of the treatment indicator variable in the data frame
-    #' @param data Data frame to be used
+    #' @param mean_alpha Prior mean for alpha
+    #' @param sd_alpha Prior standard deviation for alpha
+    #' @param mean_beta Prior mean for beta
+    #' @param sd_beta Prior standard deviation for beta
     #' @param tau_mean Prior mean for the treatment effect estimation
     #' @param tau_sd Prior standard deviation for the treatment effect estimation
-    #' @param fit Flag for fitting the data to the model or not
     #' @param seed Seed for Stan fitting
+    #' @param fit Flag for fitting the data to the model or not
     #' @param ... Additional arguments for Stan
     #' @return invisible
     initialize = function(data, y, x, treatment,
@@ -282,7 +304,7 @@ logit <- R6::R6Class(
     #' @description
     #' Plots impact's prior and posterior distributions.
     #'
-    #' For more details see [vizdraws::vizdraws()].
+    #' @param tau Logical. If TRUE, plot tau instead of eta
     #' @param ... other arguments passed to vizdraws.
     #' @return An interactive plot of the prior and posterior distributions.
     vizdraws = function(tau = FALSE, ...) {
@@ -381,10 +403,12 @@ logit <- R6::R6Class(
 
     #' @description
     #' Predict new data
-
+    #'
     #' @param new_data Data frame to be predicted
     #' @param name Group name of the prediction
     #' @param M Number of posterior draws to sample from
+    #' @param ... Additional arguments
+    #' @return invisible(self)
     predict = function(new_data, name = NULL, M = NULL, ...) {
       # Check new_data contains correct columns
       cols <- c(private$..var_cols, private$..treatment)
@@ -452,8 +476,9 @@ logit <- R6::R6Class(
 
     #' @description
     #' Get posterior predictive draws
-
     #' @param name Group name of the prediction
+    #' @param ... Additional arguments (not used)
+    #' @return Matrix of posterior predictive draws
     getPred = function(name = NULL, ...) {
       # Check if predictions exists
       if (is.null(private$..predictions)) {
@@ -474,30 +499,16 @@ logit <- R6::R6Class(
 
     #' @description
     #' Get point estimate, credible interval and prob summary of predictive draws
-
+    #'
     #' @param name Optional. Group name of the prediction
-    #'  If not provided, will return the summary for the last predicitve draws.
-    #' @param subgroup Optional. A boolean vector to get summary on the
-    #'  conditional group average. Should be the same length as the group.
-    #' @param median Optional. Logical value.
-    #'  If TRUE (default), the median of the posterior draws is returned.
-    #'  If FALSE, the mean is returned.
-    #' @param width Optional. Numeric value between 0 and 1 representing
-    #'  the desired width of the credible interval
-    #'  (e.g., 0.95 for a 95% credible interval).
-    #' @param round Optional. Integer value indicating the number of decimal
-    #'  places to round the lower and upper bounds of the credible interval.
-    #' @param a Optional. Numeric value between 0 and 1 representing
-    #'  the lower bound threshold, i.e., to calculate
-    #'  the probability that the group average is greater than a.
-    #' @param b Optional. Upper bound for the threshold.
-
-    #' @return A character string with the following information:
-    #'  - Point estimate of the predictive draws.
-    #'  - Credible interval of the point estimate with given probabily.
-    #'  - If a and / or b is supplied, report the probability that
-    #'    the posterior of an effect being greater than,
-    #'    less than, or within a range defined by thresholds.
+    #' @param subgroup Optional. A boolean vector to get summary on the conditional group average
+    #' @param median Optional. Logical value for using median or mean
+    #' @param width Optional. Numeric value for credible interval width
+    #' @param round Optional. Integer value for rounding
+    #' @param a Optional. Lower bound threshold
+    #' @param b Optional. Upper bound threshold
+    #' @param ... Additional arguments
+    #' @return A character string with summary information
     predSummary = function(name = NULL,
                            subgroup = NULL,
                            median = TRUE,
@@ -561,25 +572,18 @@ logit <- R6::R6Class(
 
     #' @description
     #' Compare the average of the posterior draws of two groups
-    #' Return point estimate, credible interval and prob summary of predictive draws
-
-    #' @param name1 Group name of the prediction to be compared with
-    #' @param name2 Group name of the prediction to be compared with
-    #' @param median Optional. Logical value.
-    #'  If TRUE (default), the median of the posterior draws is returned.
-    #'  If FALSE, the mean is returned.
-    #' @param width Optional. Numeric value between 0 and 1 representing
-    #'  the desired width of the credible interval
-    #'  (e.g., 0.95 for a 95% credible interval).
-    #' @param round Optional. Integer value indicating the number of decimal
-    #'  places to round the lower and upper bounds of the credible interval.
-    #' @param a Optional. Numeric value between 0 and 1 representing
-    #'  the lower bound threshold, i.e., to calculate
-    #'  the probability that the group average is greater than a.
-    #' @param b Optional. Upper bound for the threshold.
-
-    #' @return Return point estimate, credible interval and prob summary of
-    #' the comparison between two groups
+    #'
+    #' @param name1 Group name of the first prediction to be compared
+    #' @param name2 Group name of the second prediction to be compared
+    #' @param subgroup1 Optional. A boolean vector for the first group
+    #' @param subgroup2 Optional. A boolean vector for the second group
+    #' @param median Optional. Logical value for using median or mean
+    #' @param width Optional. Numeric value for credible interval width
+    #' @param round Optional. Integer value for rounding
+    #' @param a Optional. Lower bound threshold
+    #' @param b Optional. Upper bound threshold
+    #' @param ... Additional arguments
+    #' @return A character string with comparison summary
     predCompare = function(name1, name2,
                            subgroup1 = NULL,
                            subgroup2 = NULL,

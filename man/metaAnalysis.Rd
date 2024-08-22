@@ -17,6 +17,14 @@ distribution. This is represented by an R6 Class.
 \describe{
 \item{\code{PosteriorATE}}{Draws from the posterior distribution of the
 average treatment effect.}
+
+\item{\code{checks}}{MCMC diagnostics}
+
+\item{\code{CredibleInterval}}{Lower and upper bounds of the credible interval}
+
+\item{\code{PointEstimate}}{Point estimate of the average treatment effect}
+
+\item{\code{fitted}}{Stan fit object}
 }
 \if{html}{\out{</div>}}
 }
@@ -58,7 +66,8 @@ Create a new meta analysis object.
 \item{\code{data}}{Data frame with data point estimates and standard
 errors from studies.}
 
-\item{\code{point_estimates}}{Name of the variable in the data frame that}
+\item{\code{point_estimates}}{Name of the variable in the data frame that
+contains the point estimates.}
 
 \item{\code{standard_errors}}{Name of the variable in the data frame that
 contains the standard errors of the point estimates.}
@@ -74,6 +83,8 @@ true lift in the population.}
 \item{\code{ci_width}}{Credible interval's width.}
 
 \item{\code{X}}{Covariates matrix.}
+
+\item{\code{run_estimation}}{Integer flag to control whether estimation is run (1) or not (0).}
 
 \item{\code{...}}{other arguments passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}}
 }

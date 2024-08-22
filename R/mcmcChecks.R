@@ -21,7 +21,7 @@
 #' @field warnings list of the warning messages from failed MCMC tests
 #' @section Methods:
 #' \describe{
-#'   \item{\code{$new(fit, par)}}{Runs diagnostics on the supplied \code{stanfit}
+#'   \item{\code{$new(fit, pars)}}{Runs diagnostics on the supplied \code{stanfit}
 #'     object, restricted to parameters identified by the character vector
 #'     \code{pars}.
 #'     \cr Tests include:
@@ -58,6 +58,10 @@ mcmcChecks <- R6::R6Class(
     }
   ),
   public = list(
+    #' @description
+    #' Initialize a new mcmcChecks object and run diagnostics
+    #' @param fit A stanfit object to check
+    #' @param pars A character vector of parameter names to check
     initialize = function(fit, pars) {
       warnings <- NULL
 

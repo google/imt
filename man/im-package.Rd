@@ -2,9 +2,9 @@
 % Please edit documentation in R/im-package.R
 \docType{package}
 \name{im-package}
-\alias{im-package}
 \alias{im}
-\title{The 'im' package.}
+\alias{im-package}
+\title{The 'im' package}
 \description{
 A DESCRIPTION OF THE PACKAGE
 }
@@ -12,6 +12,7 @@ A DESCRIPTION OF THE PACKAGE
 Stan Development Team (NA). RStan: the R interface to Stan. R package version 2.32.6. https://mc-stan.org
 }
 \author{
-\strong{Maintainer}: First Last \email{first.last@example.com} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
+\strong{Maintainer}: Ignacio Martinez \email{martinezig@google.com} (\href{https://orcid.org/0000-0002-3721-8172}{ORCID})
 
 }
+\keyword{internal}

@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' @title Bayesian Linear Model Factory
+#' @title Bayesian Negative Binomial Model Factory
 #' @docType class
 #' @export
-#' @field version im package version used to fit model
 
 negativeBinomial <- R6::R6Class(
   classname = "bnb",
@@ -30,15 +29,19 @@ negativeBinomial <- R6::R6Class(
     ..credible_interval = NULL
   ),
   active = list(
+    #' @field version Package version used to fit the model
     version = function() {
       return(private$..version)
     },
+    #' @field mcmChecks MCMC diagnostics
     mcmChecks = function() {
       return(private$..mcmc_checks)
     },
+    #' @field credible_interval Credible interval for the treatment effect
     credible_interval = function() {
       return(private$..credible_interval)
     },
+    #' @field tau_draws Posterior draws for the treatment effect
     tau_draws = function() {
       return(private$..tau_draws)
     }
@@ -53,6 +56,7 @@ negativeBinomial <- R6::R6Class(
     #' @param data Data frame to be used
     #' @param tau_mean Prior mean for the treatment effect estimation
     #' @param tau_sd Prior standard deviation for the treatment effect estimation
+    #' @param run_estimation Integer flag to control whether estimation is run (1) or not (0)
     #' @param seed Seed for Stan fitting
     #' @param ... Additional arguments for Stan
     #' @return invisible

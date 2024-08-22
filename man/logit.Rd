@@ -5,14 +5,28 @@
 \alias{logit}
 \title{Bayesian Logit Model Factory}
 \description{
-Bayesian Logit Model Factory
-
-Bayesian Logit Model Factory
+A class for creating and managing Bayesian Logit Models
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
 \item{\code{version}}{im package version used to fit model}
+
+\item{\code{tau_draws}}{Posterior draws for the treatment effect}
+
+\item{\code{mcmChecks}}{MCMC diagnostics}
+
+\item{\code{credible_interval}}{Credible interval for the treatment effect}
+
+\item{\code{prior_eta}}{Prior distribution for eta}
+
+\item{\code{prior_tau}}{Prior distribution for tau}
+
+\item{\code{prior_mean_y}}{Prior distribution for mean y}
+
+\item{\code{eta_draws}}{Posterior draws for eta}
+
+\item{\code{predict_list}}{List of predictions}
 }
 \if{html}{\out{</div>}}
 }
@@ -38,6 +52,33 @@ Bayesian Logit Model Factory
 \if{html}{\out{<a id="method-logit-new"></a>}}
 \if{latex}{\out{\hypertarget{method-logit-new}{}}}
 \subsection{Method \code{new()}}{
+Get the package version
+
+
+Get the posterior draws for tau
+
+
+Get the MCMC diagnostics
+
+
+Get the credible interval
+
+
+Get the prior for eta
+
+
+Get the prior for tau
+
+
+Get the prior for mean y
+
+
+Get the posterior draws for eta
+
+
+Get the list of predictions
+
+
 Create a new Bayesian Logit Model object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{logit$new(
@@ -67,6 +108,14 @@ Create a new Bayesian Logit Model object.
 \item{\code{x}}{Vector of names of all covariates in the data frame}
 
 \item{\code{treatment}}{Name of the treatment indicator variable in the data frame}
+
+\item{\code{mean_alpha}}{Prior mean for alpha}
+
+\item{\code{sd_alpha}}{Prior standard deviation for alpha}
+
+\item{\code{mean_beta}}{Prior mean for beta}
+
+\item{\code{sd_beta}}{Prior standard deviation for beta}
 
 \item{\code{tau_mean}}{Prior mean for the treatment effect estimation}
 
@@ -209,8 +258,6 @@ specified number of decimal places
 \if{latex}{\out{\hypertarget{method-logit-vizdraws}{}}}
 \subsection{Method \code{vizdraws()}}{
 Plots impact's prior and posterior distributions.
-
-For more details see \code{\link[vizdraws:vizdraws]{vizdraws::vizdraws()}}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{logit$vizdraws(tau = FALSE, ...)}\if{html}{\out{</div>}}
 }
@@ -218,6 +265,8 @@ For more details see \code{\link[vizdraws:vizdraws]{vizdraws::vizdraws()}}.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
+\item{\code{tau}}{Logical. If TRUE, plot tau instead of eta}
+
 \item{\code{...}}{other arguments passed to vizdraws.}
 }
 \if{html}{\out{</div>}}
@@ -281,8 +330,13 @@ Predict new data
 \item{\code{name}}{Group name of the prediction}
 
 \item{\code{M}}{Number of posterior draws to sample from}
+
+\item{\code{...}}{Additional arguments}
 }
 \if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+invisible(self)
 }
 }
 \if{html}{\out{<hr>}}
@@ -298,8 +352,13 @@ Get posterior predictive draws
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{name}}{Group name of the prediction}
+
+\item{\code{...}}{Additional arguments (not used)}
 }
 \if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Matrix of posterior predictive draws
 }
 }
 \if{html}{\out{<hr>}}
@@ -323,40 +382,26 @@ Get point estimate, credible interval and prob summary of predictive draws
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{name}}{Optional. Group name of the prediction
-If not provided, will return the summary for the last predicitve draws.}
+\item{\code{name}}{Optional. Group name of the prediction}
 
-\item{\code{subgroup}}{Optional. A boolean vector to get summary on the
-conditional group average. Should be the same length as the group.}
+\item{\code{subgroup}}{Optional. A boolean vector to get summary on the conditional group average}
 
-\item{\code{median}}{Optional. Logical value.
-If TRUE (default), the median of the posterior draws is returned.
-If FALSE, the mean is returned.}
+\item{\code{median}}{Optional. Logical value for using median or mean}
 
-\item{\code{width}}{Optional. Numeric value between 0 and 1 representing
-the desired width of the credible interval
-(e.g., 0.95 for a 95\% credible interval).}
+\item{\code{width}}{Optional. Numeric value for credible interval width}
 
-\item{\code{round}}{Optional. Integer value indicating the number of decimal
-places to round the lower and upper bounds of the credible interval.}
+\item{\code{round}}{Optional. Integer value for rounding}
 
-\item{\code{a}}{Optional. Numeric value between 0 and 1 representing
-the lower bound threshold, i.e., to calculate
-the probability that the group average is greater than a.}
+\item{\code{a}}{Optional. Lower bound threshold}
 
-\item{\code{b}}{Optional. Upper bound for the threshold.}
+\item{\code{b}}{Optional. Upper bound threshold}
+
+\item{\code{...}}{Additional arguments}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A character string with the following information:
-\itemize{
-\item Point estimate of the predictive draws.
-\item Credible interval of the point estimate with given probabily.
-\item If a and / or b is supplied, report the probability that
-the posterior of an effect being greater than,
-less than, or within a range defined by thresholds.
-}
+A character string with summary information
 }
 }
 \if{html}{\out{<hr>}}
@@ -364,7 +409,6 @@ less than, or within a range defined by thresholds.
 \if{latex}{\out{\hypertarget{method-logit-predCompare}{}}}
 \subsection{Method \code{predCompare()}}{
 Compare the average of the posterior draws of two groups
-Return point estimate, credible interval and prob summary of predictive draws
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{logit$predCompare(
   name1,
@@ -383,32 +427,30 @@ Return point estimate, credible interval and prob summary of predictive draws
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{name1}}{Group name of the prediction to be compared with}
+\item{\code{name1}}{Group name of the first prediction to be compared}
 
-\item{\code{name2}}{Group name of the prediction to be compared with}
+\item{\code{name2}}{Group name of the second prediction to be compared}
 
-\item{\code{median}}{Optional. Logical value.
-If TRUE (default), the median of the posterior draws is returned.
-If FALSE, the mean is returned.}
+\item{\code{subgroup1}}{Optional. A boolean vector for the first group}
 
-\item{\code{width}}{Optional. Numeric value between 0 and 1 representing
-the desired width of the credible interval
-(e.g., 0.95 for a 95\% credible interval).}
+\item{\code{subgroup2}}{Optional. A boolean vector for the second group}
 
-\item{\code{round}}{Optional. Integer value indicating the number of decimal
-places to round the lower and upper bounds of the credible interval.}
+\item{\code{median}}{Optional. Logical value for using median or mean}
 
-\item{\code{a}}{Optional. Numeric value between 0 and 1 representing
-the lower bound threshold, i.e., to calculate
-the probability that the group average is greater than a.}
+\item{\code{width}}{Optional. Numeric value for credible interval width}
 
-\item{\code{b}}{Optional. Upper bound for the threshold.}
+\item{\code{round}}{Optional. Integer value for rounding}
+
+\item{\code{a}}{Optional. Lower bound threshold}
+
+\item{\code{b}}{Optional. Upper bound threshold}
+
+\item{\code{...}}{Additional arguments}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Return point estimate, credible interval and prob summary of
-the comparison between two groups
+A character string with comparison summary
 }
 }
 \if{html}{\out{<hr>}}
