@@ -13,12 +13,12 @@ models, such as linear, logistic, and negative binomial models.
 
 ## Installation
 
-You can install the development version of im from
-[GitHub](https://github.com/google/im) with:
+You can install the development version of imt from
+[GitHub](https://github.com/google/imt) with:
 
 ``` r
 # install.packages("pak")
-pak::pak("google/im")
+pak::pak("google/imt")
 ```
 
 ## Example
