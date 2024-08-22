@@ -49,3 +49,5 @@ Suggests:
     roxygen2,
     testthat
 SystemRequirements: GNU make
+URL: https://github.com/google/imt
+BugReports: https://github.com/google/imt/issues
