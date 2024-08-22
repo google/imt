@@ -23,7 +23,7 @@ test_that("The Bayesian Linear Model Works", {
     t = sample(c(FALSE, TRUE), size = N, replace = TRUE),
     y = rnorm(n = N, mean = 0, sd = 1) # This is just a placeholder for now
   )
-  blm_fake <- im::blm$new(
+  blm_fake <- imt::blm$new(
     y = "y", x = c("y_pre", "x1", "x2", "x3"),
     treatment = "t", data = fake_data, eta_mean = 0,
     eta_sd = 1, generate_fake_data = 1

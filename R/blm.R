@@ -68,7 +68,7 @@ blm <- R6::R6Class(
     #' @return invisible
     initialize = function(data, y, x, treatment, eta_mean, eta_sd,
                           generate_fake_data = 0, seed = 1982, ...) {
-      private$..version <- packageVersion("im")
+      private$..version <- packageVersion("imt")
       stan_data <- createData(
         data = data, y = y, treatment = treatment,
         x = x, eta_mean = eta_mean, eta_sd = eta_sd,

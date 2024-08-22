@@ -116,7 +116,7 @@ logit <- R6::R6Class(
                           seed = 1982,
                           fit = TRUE,
                           ...) {
-      private$..version <- packageVersion("im")
+      private$..version <- packageVersion("imt")
       private$..var_cols <- x
       private$..treatment <- treatment
       cleaned_data <- cleanData(

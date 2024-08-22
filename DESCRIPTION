@@ -1,5 +1,5 @@
-Package: im
-Title: Impact Measurement
+Package: imt
+Title: Impact Measurement Toolkit
 Version: 0.0.1
 Authors@R:
     person(given = "Ignacio",
@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "martinezig@google.com",
            comment = c(ORCID = "0000-0002-3721-8172"))
-Description: A simple causal inference tool for impact measurement created
+Description: A simple causal inference toolit for impact measurement created
   by YouTube's Impact Measurement Team.
 License: Apache License (>= 2.0)
 Encoding: UTF-8

@@ -178,14 +178,14 @@ randomize <-
     repeat {
       # Check baseline equivalence based on grouping (or lack thereof)
       if (is.null(group_by)) {
-        balance_summary <- im::checkBaseline(new_data, variables, "treated")
+        balance_summary <- imt::checkBaseline(new_data, variables, "treated")
         worst_balance <-
           max(as.numeric(balance_summary$balance))
       } else {
         # Group by all columns specified in group_by
         balance_summaries <- new_data %>%
           dplyr::group_by(dplyr::across(dplyr::all_of(group_by))) %>%
-          dplyr::group_modify(~ im::checkBaseline(., variables, "treated"))
+          dplyr::group_modify(~ imt::checkBaseline(., variables, "treated"))
         worst_balance <-
           max(as.numeric(balance_summaries$balance))
         balance_summaries <- .combineColumns(balance_summaries)

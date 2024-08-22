@@ -9,14 +9,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' The 'im' package
+#' The 'imt' package
 #'
 #' @description A DESCRIPTION OF THE PACKAGE
 #'
 #' @references
 #' Stan Development Team (NA). RStan: the R interface to Stan. R package version 2.32.6. https://mc-stan.org
 #'
-#' @useDynLib im, .registration = TRUE
+#' @useDynLib imt, .registration = TRUE
 #' @import methods
 #' @import Rcpp
 #' @importFrom rstan sampling

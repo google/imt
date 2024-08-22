@@ -13,6 +13,6 @@
 # limitations under the License.
 
 library(testthat)
-library(im)
+library(imt)
 
-test_check("im")
+test_check("imt")

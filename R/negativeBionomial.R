@@ -62,7 +62,7 @@ negativeBinomial <- R6::R6Class(
     #' @return invisible
     initialize = function(data, y, x, treatment, tau_mean, tau_sd,
                           run_estimation = 1, seed = 1982, ...) {
-      private$..version <- packageVersion("im")
+      private$..version <- packageVersion("imt")
       private$..tau_mean <- tau_mean
       private$..tau_sd <- tau_sd
       Y <- data |> pull({{ y }})

@@ -54,7 +54,7 @@ randomizer <- R6::R6Class(
       return(private$..balance_summary)
     },
     balance_plot = function() {
-      return(im::balancePlot(data = private$..balance_summary))
+      return(imt::balancePlot(data = private$..balance_summary))
     }
   ),
   public = list(
@@ -72,7 +72,7 @@ randomizer <- R6::R6Class(
     #' @return A new \code{randomizer} object.
     initialize = function(data, variables, standard = "Not Concerned",
                           seed = NULL, max_attempts = 100, group_by = NULL) {
-      private$..version <- packageVersion("im")
+      private$..version <- packageVersion("imt")
       randomized <- randomize(
         data = data,
         seed = seed, max_attempts = max_attempts,
@@ -85,9 +85,9 @@ randomizer <- R6::R6Class(
 
       # Check for stratified randomization and create plots accordingly
       if (inherits(randomized$balance, "list")) {
-        private$..balance_plot <- lapply(randomized$balance, im::balancePlot)
+        private$..balance_plot <- lapply(randomized$balance, imt::balancePlot)
       } else {
-        private$..balance_plot <- im::balancePlot(data = randomized$balance)
+        private$..balance_plot <- imt::balancePlot(data = randomized$balance)
       }
       return(invisible(self))
     }
