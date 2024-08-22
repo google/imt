@@ -10,3 +10,4 @@
 CONTRIBUTING.md
 ^README\.Rmd$
 LICENSE
+^cran-comments\.md$
