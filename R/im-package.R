@@ -22,6 +22,9 @@
 #' @importFrom rstan sampling
 #' @importFrom rstantools rstan_config
 #' @importFrom RcppParallel RcppParallelLibs
+#' @importFrom R6 R6Class
+#' @importFrom bayesplot mcmc_trace
+#' @importFrom vizdraws vizdraws
 #'
 #' @keywords internal
 "_PACKAGE"

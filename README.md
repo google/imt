@@ -24,4 +24,4 @@ pak::pak("google/im")
 ## Example
 
 Examples for how to use the function included in this package can be
-found \[here\](<https://book.martinez.fyi/rct_basic.html#the-im-package>
+found [here](https://book.martinez.fyi/rct_basic.html#the-im-package)

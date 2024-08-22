@@ -19,7 +19,7 @@
 negativeBinomial <- R6::R6Class(
   classname = "bnb",
   private = list(
-    ..mcmc_checks = NULL, # a mcmc_checks object
+    ..mcmc_checks = NULL,
     ..version = NULL,
     ..stanfit = NULL,
     ..stan_data = NULL,
