@@ -16,8 +16,9 @@ ggplot2 baseline balance plot.
 Create a Baseline Balance Plot.
 }
 \examples{
-\dontrun{
+\donttest{
 library(imt)
+set.seed(123)  # for reproducibility
 N <- 1000
 fake_data <- tibble::tibble(x1 = rnorm(N), x2 = rnorm(N), t = rbinom(N, 1, 0.5))
 baseline <- checkBaseline(data = fake_data, variables = c("x1", "x2"), treatment = "t")

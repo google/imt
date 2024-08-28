@@ -7,8 +7,14 @@ Authors@R:
            role = c("aut", "cre"),
            email = "martinezig@google.com",
            comment = c(ORCID = "0000-0002-3721-8172"))
-Description: A simple causal inference toolkit for impact measurement created
-  by YouTube's Impact Measurement Team.
+Description: A toolkit for causal inference in experimental and observational 
+    studies. Implements various simple Bayesian models including linear, 
+    negative binomial, and logistic regression for impact estimation. 
+    Provides functionality for randomization and checking baseline equivalence 
+    in experimental designs. The package aims to simplify the process of 
+    impact measurement for researchers and analysts across different fields. 
+    Examples and detailed usage instructions are available at 
+    <https://book.martinez.fyi>.
 License: Apache License (>= 2.0)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
