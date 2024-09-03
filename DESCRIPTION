@@ -1,6 +1,6 @@
 Package: imt
 Title: Impact Measurement Toolkit
-Version: 1.0.0
+Version: 1.0.0.9000
 Authors@R:
     person(given = "Ignacio",
            family = "Martinez",
