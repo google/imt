@@ -328,8 +328,8 @@ hurdleLogNormal <- R6::R6Class(
 
       p2 <- ggplot(data = priors, aes(x = tau_prior_prob_zero_draws)) +
         ggplot2::geom_histogram(bins = bins) +
-        labs(title = "Prior Distribution of tau_prob_zero (%)",
-             x = "tau_prob_zero (%)", y = "Frequency")
+        labs(title = "Effect, in percentage points, for the probability of a zero",
+             x = "tau_prob_zero (pp)", y = "Frequency")
 
       # Apply xlim if provided
       if (!is.null(xlim_ate)) {
