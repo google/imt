@@ -15,6 +15,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 RcppExport SEXP _rcpp_module_boot_stan_fit4NB_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4blm_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4blmnox_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4hurdlelognormal_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4logit_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4metaanalysisnox_mod();
 
@@ -22,6 +23,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rcpp_module_boot_stan_fit4NB_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4NB_mod, 0},
     {"_rcpp_module_boot_stan_fit4blm_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4blm_mod, 0},
     {"_rcpp_module_boot_stan_fit4blmnox_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4blmnox_mod, 0},
+    {"_rcpp_module_boot_stan_fit4hurdlelognormal_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4hurdlelognormal_mod, 0},
     {"_rcpp_module_boot_stan_fit4logit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4logit_mod, 0},
     {"_rcpp_module_boot_stan_fit4metaanalysisnox_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4metaanalysisnox_mod, 0},
     {NULL, NULL, 0}
