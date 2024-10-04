@@ -33,7 +33,7 @@
 #' }
 #'
 #' @export
-CalculateDIDEffect <- function(mean_pre_control, sd_pre_control, n_pre_control,
+calculateDIDEffect <- function(mean_pre_control, sd_pre_control, n_pre_control,
                                mean_post_control, sd_post_control, n_post_control,
                                mean_pre_treat, sd_pre_treat, n_pre_treat,
                                mean_post_treat, sd_post_treat, n_post_treat) {
