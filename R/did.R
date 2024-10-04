@@ -24,7 +24,7 @@
 #'
 #' @examples
 #' \donttest{
-#' CalculateDIDEffect(
+#' calculateDIDEffect(
 #'   mean_pre_control = 10, sd_pre_control = 2, n_pre_control = 50,
 #'   mean_post_control = 12, sd_post_control = 2.5, n_post_control = 50,
 #'   mean_pre_treat = 11, sd_pre_treat = 2.1, n_pre_treat = 50,
