@@ -31,14 +31,6 @@ basie_estimate <- basie$new(
   likSD = likSD
 )
 
-basie_estimate$vizdraws(
-  percentage = TRUE,
-  breaks = c(0, 0.05),
-  break_names = c("Worse", "Equivalent", "Better"),
-  height = 450,
-  width = 750,
-  display_mode_name = TRUE
-)
 
 txt <-
   glue::glue(
