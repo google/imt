@@ -2,7 +2,9 @@
 
 export("%>%")
 export(balancePlot)
+export(basie)
 export(blm)
+export(calculateDIDEffect)
 export(calculateEffectSizes)
 export(checkBaseline)
 export(cleanData)
