@@ -21,8 +21,8 @@
 
 data {
   int<lower=0> J;         // number of studies
-  real y[J];              // estimated lift
-  real<lower=0> sigma[J]; // standard error of lift estimates
+  array[J] real y;              // estimated lift
+  array[J] real<lower=0> sigma; // standard error of lift estimates
   int<lower=0, upper=1> run_estimation;
   real<lower=0> sd_mu;
   real mean_mu;

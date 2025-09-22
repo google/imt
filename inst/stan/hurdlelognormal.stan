@@ -17,7 +17,7 @@
 data {
   // Data dimensions
   int<lower=0> N;        // Number of observations
-  int<lower=0, upper=1> treatment[N]; // Treatment indicator (0 or 1)
+  array[N] int<lower=0, upper=1> treatment; // Treatment indicator (0 or 1)
   int<lower=1> K;        // Number of predictors (columns in X)
   // Data
   matrix[N, K] X;        // Design matrix
@@ -119,8 +119,8 @@ generated quantities {
   real ATE;
   real tau_prob_zero;
 
-  int<lower=0, upper=1> y0_zero[N];
-  int<lower=0, upper=1> y1_zero[N];
+  array[N] int<lower=0, upper=1> y0_zero;
+  array[N] int<lower=0, upper=1> y1_zero;
 
   for (n in 1:N) {
     // Linear predictors for both treatment and control

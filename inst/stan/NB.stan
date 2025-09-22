@@ -17,7 +17,7 @@
 data {
   int N;                // Number of observations
   int K;                // Number of covariates
-  int y[N];             // Outcome variable
+  array[N] int y;             // Outcome variable
   matrix[N, K] X;       // Model matrix
   vector[N] treat;      // Treatment indicator
   real tau_mean;        // Prior mean for treatment effect

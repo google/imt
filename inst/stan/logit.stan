@@ -16,7 +16,7 @@
 
 data {
   int N;                          // Number of observations
-  int<lower = 0, upper = 1> y[N]; // Outcome (binary 0 or 1)
+  array[N] int<lower = 0, upper = 1> y; // Outcome (binary 0 or 1)
   int K;                          // Number of covariates
   matrix[N, K] X;                 // Model matrix (contains predictor values)
   real mean_alpha;
