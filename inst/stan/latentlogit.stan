@@ -19,8 +19,8 @@ data {
   int<lower=0> K;             // Number of covariates
   matrix[C, K] X;             // Covariate matrix
   vector[C] treat;            // Treatment indicator (0 or 1)
-  int<lower=0> k[C];          // Number of 'dissatisfied' (1) ratings for each call
-  int<lower=1> N[C];          // Total number of ratings for each call
+  array[C] int<lower=0> k;    // Number of 'dissatisfied' (1) ratings for each call
+  array[C] int<lower=1> N;    // Total number of ratings for each call
 
   // Priors for the latent logistic regression
   real mean_alpha;            // Prior mean for intercept
