@@ -108,14 +108,15 @@ generated quantities {
   real eta;
 
   // Linear predictors
-  vector[C] theta_c = alpha + X_std * beta + tau * 1;
-  vector[C] theta_c_no_treat = alpha + X_std * beta;
+  vector[C] theta_c_treated = alpha + X_std * beta + tau * 1;
+  vector[C] theta_c_control = alpha + X_std * beta;
+  vector[C] theta_c_observed = alpha + X_std * beta + tau * treat;
 
   for (c in 1:C) {
     // Calculate P(D_c=1 | R_c, params) using Bayes' rule
-    real log_prob_if_dissatisfied = bernoulli_logit_lpmf(1 | theta_c[c]) +
+    real log_prob_if_dissatisfied = bernoulli_logit_lpmf(1 | theta_c_observed[c]) +
                                     binomial_lpmf(k[c] | N[c], 1 - epsilon_1);
-    real log_prob_if_satisfied = bernoulli_logit_lpmf(0 | theta_c[c]) +
+    real log_prob_if_satisfied = bernoulli_logit_lpmf(0 | theta_c_observed[c]) +
                                   binomial_lpmf(k[c] | N[c], epsilon_0);
     
     // The above probabilities need to be standardized due to the scaling of p(R_c)
@@ -124,6 +125,5 @@ generated quantities {
   }
 
   // Calculate ATE on the probability of dissatisfaction
-  eta = mean(inv_logit(theta_c)) - mean(inv_logit(theta_c_no_treat));
+  eta = mean(inv_logit(theta_c_treated)) - mean(inv_logit(theta_c_control));
 }
-

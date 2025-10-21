@@ -42,6 +42,11 @@ latentLogit <- R6::R6Class(
     ..eta_draws = NULL,
     ..epsilon0_draws = NULL,
     ..epsilon1_draws = NULL,
+    ..alpha0_draws = NULL,
+    ..beta0_draws = NULL,
+    ..alpha1_draws = NULL,
+    ..beta1_draws = NULL,
+    ..individualized_errors_draws = NULL,
     ..prob_dissatisfied_draws = NULL,
     ..stan_data = NULL,
     ..credible_interval = NULL,
@@ -103,8 +108,11 @@ latentLogit <- R6::R6Class(
     #' @param data Data frame in LONG format (one row per AI rating)
     #' @param call_id Name of the column identifying the unit/call
     #' @param y_rating Name of the outcome variable (the 0/1 AI rating)
+    #' @param y_difficulty Name of the column with AI difficulty ratings
     #' @param x_covariates Vector of names of all covariates
     #' @param treatment Name of the treatment indicator variable
+    #' @param restriction Logical. If TRUE, use the restricted priors for errors
+    #' @param individualized_error Logical. If TRUE, errors are based on each call's difficulty score
     #' @param mean_alpha Prior mean for alpha (latent intercept)
     #' @param sd_alpha Prior standard deviation for alpha
     #' @param mean_beta Prior mean for beta (covariates)
@@ -122,6 +130,7 @@ latentLogit <- R6::R6Class(
     initialize = function(data,
                           call_id,
                           y_rating,
+                          y_difficulty = NULL,
                           x_covariates,
                           treatment,
                           mean_alpha = -3,
@@ -136,8 +145,24 @@ latentLogit <- R6::R6Class(
                           epsilon1_beta = 1,
                           seed = 1997,
                           restriction = FALSE,
+                          individualized_error = FALSE,
                           fit = TRUE,
                           ...) {
+
+      if (individualized_error && !restriction) {
+        stop(paste(
+          "The unrestricted individualized error model is not supported due to",
+          "severe identifiability issues (label switching). Please use 'restriction = TRUE'",
+          "when setting 'individualized_error = TRUE'."
+        ))
+      }
+
+      if (individualized_error && is.null(y_difficulty)) {
+        stop("`y_difficulty` column must be provided when `individualized_error` is TRUE.")
+      }
+      if (individualized_error && (!y_difficulty %in% names(data))) {
+         stop(glue::glue("Difficulty column '{y_difficulty}' not found in data."))
+      }
       
       # Store variable names
       private$..version <- packageVersion("imt") # Or your package name
@@ -160,6 +185,20 @@ latentLogit <- R6::R6Class(
           )
         ) |>
         dplyr::ungroup()
+
+      if (individualized_error) {
+        message("Aggregating and standardizing continuous difficulty scores...")
+        difficulty_mean <- data |>
+          dplyr::group_by(!!dplyr::sym(call_id)) |>
+          dplyr::summarize(d_obs = mean(!!dplyr::sym(y_difficulty), na.rm = TRUE)) |>
+          dplyr::mutate(d_obs = scales::rescale(d_obs, to = c(0, 1)))
+        
+        if (any(is.nan(difficulty_mean$d_obs))) {
+            difficulty_mean$d_obs[is.nan(difficulty_mean$d_obs)] <- 0.5
+        }
+        
+        agg_data <- dplyr::left_join(agg_data, difficulty_mean, by = call_id)
+      }      
       
       # Store call_ids in order for later mapping
       private$..call_ids <- agg_data[[call_id]]
@@ -184,74 +223,82 @@ latentLogit <- R6::R6Class(
         sd_beta = rep(sd_beta, length(x_covariates)),
         tau_mean = tau_mean,
         tau_sd = tau_sd,
-        epsilon0_alpha = epsilon0_alpha,
-        epsilon0_beta = epsilon0_beta,
-        epsilon1_alpha = epsilon1_alpha,
-        epsilon1_beta = epsilon1_beta,
         run_estimation = 0 # Start with 0 for prior simulation
       )
       
-      private$..tau_prior_sd <- tau_sd
-      private$..tau_prior_mean <- tau_mean
+      # Add data specific to model type
+      if (individualized_error) {
+        stan_data$d_obs <- agg_data$d_obs
+      } else {
+        stan_data$epsilon0_alpha <- epsilon0_alpha
+        stan_data$epsilon0_beta <- epsilon0_beta
+        stan_data$epsilon1_alpha <- epsilon1_alpha
+        stan_data$epsilon1_beta <- epsilon1_beta
+      }
+
       private$..stan_data <- stan_data
+
+      if (individualized_error) {
+        prior_model <- imt.models::latentlogitrestrictedheteroerror
+        posterior_model <- prior_model
+      } else {
+        prior_model <- if (restriction) imt.models::latentlogitrestricted else imt.models::latentlogit
+        posterior_model <- prior_model
+      }
       
       # Draw from the prior
       message("Drawing from prior distributions...")
-      if (restriction) {
-        sim_out <- rstan::sampling(
-        imt.models::latentlogitrestricted,
+      sim_out <- rstan::sampling(
+        prior_model,
         data = private$..stan_data,
         seed = seed,
-        ... 
+        ...
       )
-      } else {
-        sim_out <- rstan::sampling(
-        imt.models::latentlogit,
-        data = private$..stan_data,
-        seed = seed,
-        ... 
-      )
-      }
-
+      
       private$..prior_eta <- rstan::extract(sim_out, pars = "eta")$eta
       private$..prior_tau <- rstan::extract(sim_out, pars = "tau")$tau
       
       # Fit model
       if (fit) {
         message("Fitting model to the data...")
-        stan_data$run_estimation <- 1
-        if (restriction) {
-          private$..stanfit <- rstan::sampling(
-          imt.models::latentlogitrestricted,
-          data = stan_data,
+        private$..stan_data$run_estimation <- 1 
+        private$..stanfit <- rstan::sampling(
+          posterior_model,
+          data = private$..stan_data,
           seed = seed,
           ...
         )
-        } else {
-          private$..stanfit <- rstan::sampling(
-          imt.models::latentlogit,
-          data = stan_data,
-          seed = seed,
-          ...
-        )
-        }
 
         # Extract Draws
         message("Extracting posterior draws...")
         draws <- rstan::extract(private$..stanfit)
         
+        pars_to_check <- if (individualized_error) {
+          c("tau", "alpha_0", "beta_0", "alpha_1", "beta_1")
+        } else {
+          c("tau", "epsilon_0", "epsilon_1")
+        }
         private$..mcmc_checks <- mcmcChecks$new(
           fit = private$..stanfit,
-          pars = c("tau", "epsilon_0", "epsilon_1")
+          pars = pars_to_check
         )
         
         private$..tau_draws <- as.vector(draws$tau)
         private$..eta_draws <- as.vector(draws$eta)
-        private$..epsilon0_draws <- as.vector(draws$epsilon_0)
-        private$..epsilon1_draws <- as.vector(draws$epsilon_1)
         
         # prob_dissatisfied is a [draws x C] matrix
         private$..prob_dissatisfied_draws <- draws$prob_dissatisfied
+        
+        if (individualized_error) {
+          private$..alpha0_draws <- draws$alpha_0
+          private$..beta0_draws <- draws$beta_0
+          private$..alpha1_draws <- draws$alpha_1
+          private$..beta1_draws <- draws$beta_1
+          private$..individualized_errors_draws <- draws$individualized_errors
+        } else {
+          private$..epsilon0_draws <- draws$epsilon_0
+          private$..epsilon1_draws <- draws$epsilon_1
+        }
       }
       return(invisible(self))
     },
@@ -261,10 +308,17 @@ latentLogit <- R6::R6Class(
     #' @param ... Additional arguments for bayesplot::mcmc_trace
     #' @return A ggplot object.
     tracePlot = function(...) {
+      # Show relevant parameters based on which model was run
+      pars_to_plot <- if (!is.null(private$..individualized_errors_draws)) {
+         c("tau", "eta", "alpha_0", "beta_0", "alpha_1", "beta_1", "alpha")
+      } else {
+         c("tau", "eta", "epsilon_0", "epsilon_1", "alpha")
+      }
+      
       return(
         bayesplot::mcmc_trace(
           private$..stanfit,
-          pars = c("tau", "eta", "epsilon_0", "epsilon_1", "alpha"),
+          pars = pars_to_plot,
           ...
         )
       )
@@ -389,22 +443,29 @@ latentLogit <- R6::R6Class(
     #' @param width Numeric value for credible interval width (e.g., 0.75).
     #' @return A data.frame summarizing epsilon_0 and epsilon_1.
     getErrorRates = function(width = 0.75) {
+      if (!is.null(private$..individualized_errors_draws)) {
+        message("Returning summary of the error rate function parameters.")
+        params_to_summarize <- c("alpha_0", "beta_0", "alpha_1", "beta_1")
+        summary_list <- lapply(params_to_summarize, function(p) {
+          draws <- rstan::extract(private$..stanfit, pars = p)[[1]]
+          tibble::tibble(Parameter = p, Mean = mean(draws))
+        })
+        return(dplyr::bind_rows(summary_list))
+      }
+      
       prob_lower <- (1 - width) / 2
       prob_upper <- 1 - prob_lower
-      
       summarize_draws <- function(draws, name) {
         tibble::tibble(
-          parameter = name,
-          mean = mean(draws),
-          median = median(draws),
+          parameter = name, mean = mean(draws), median = median(draws),
           lower_bound = quantile(draws, probs = prob_lower),
           upper_bound = quantile(draws, probs = prob_upper)
         )
       }
-      
+
       e0_summary <- summarize_draws(private$..epsilon0_draws, "Epsilon_0 (False Positive)")
       e1_summary <- summarize_draws(private$..epsilon1_draws, "Epsilon_1 (False Negative)")
-      
+
       return(dplyr::bind_rows(e0_summary, e1_summary))
     },
     
@@ -468,6 +529,38 @@ latentLogit <- R6::R6Class(
                                face = "bold", size = 14)
       )
       return(plots)
+    },
+
+    #' @description
+    #' Get posterior summary of AI error rates for each latent difficulty level.
+    #' (Only for the discrete individualized error model).
+    #' @param width The width of the credible interval (e.g., 0.75).
+    #' @return A data.frame summarizing epsilon_0 and epsilon_1 for each level.
+    getIndividualizedErrors = function(width = 0.75) {
+      if (is.null(private$..individualized_errors_draws)) {
+        stop("This function is only available when individualized_error = TRUE.")
+      }
+      
+      prob_lower <- (1 - width) / 2
+      prob_upper <- 1 - prob_lower
+      
+      # private$..individualized_errors_draws is an array: [draws, calls, 2]
+      # We want the mean and CI for each call's FPR and FNR
+      mean_errors <- apply(private$..individualized_errors_draws, c(2, 3), mean)
+      lower_bounds <- apply(private$..individualized_errors_draws, c(2, 3), quantile, probs = prob_lower)
+      upper_bounds <- apply(private$..individualized_errors_draws, c(2, 3), quantile, probs = prob_upper)
+      
+      return(
+        tibble::tibble(
+          call_id = private$..call_ids,
+          FPR_mean = mean_errors[, 1],
+          FPR_lower = lower_bounds[, 1],
+          FPR_upper = upper_bounds[, 1],
+          FNR_mean = mean_errors[, 2],
+          FNR_lower = lower_bounds[, 2],
+          FNR_upper = upper_bounds[, 2]
+        )
+      )
     }
   )
 )
