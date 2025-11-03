@@ -131,8 +131,8 @@ latentLogit <- R6::R6Class(
                           call_id,
                           y_rating,
                           y_difficulty = NULL,
-                          x_covariates,
-                          treatment,
+                          x_covariates = NULL,
+                          treatment = NULL,
                           mean_alpha = -3,
                           sd_alpha = 2,
                           mean_beta = 0,
@@ -169,18 +169,62 @@ latentLogit <- R6::R6Class(
       private$..var_cols <- x_covariates
       private$..treatment_col <- treatment
       private$..call_id_col <- call_id
+
+      # Flags for if covariates and treatment are included
+      run_covariates <- 1
+      run_treatment <- 1
+      
+      # Handle missing x_covariates
+      if (is.null(x_covariates)) {
+        message("No covariates provided. Fitting an intercept-only model for covariates.")
+        run_covariates <- 0
+        x_covariates <- "dummy_cov" # Create a dummy name
+        data$dummy_cov <- 0.0       # Add a dummy column of zeros
+        K <- 1
+        mean_beta_vec <- as.array(c(mean_beta))     # Dummy prior
+        sd_beta_vec <- as.array(c(sd_beta))       # Dummy prior
+      } else {
+        K <- length(x_covariates)
+        mean_beta_vec <- rep(mean_beta, K)
+        sd_beta_vec <- rep(sd_beta, K)
+        if (K == 1) {
+          mean_beta_vec <- as.array(mean_beta_vec)
+          sd_beta_vec <- as.array(sd_beta_vec)
+        }
+      }
+
+      # Handle missing treatment
+      if (is.null(treatment)) {
+        message("No treatment variable provided. Model will not estimate treatment effect.")
+        run_treatment <- 0
+        treatment <- "dummy_treat" # Create a dummy name
+        data$dummy_treat <- 0.0      # Add a dummy column of zeros
+      }
       
       # Aggregate Data
       # The Stan model needs one row per call, with k and N
       message("Aggregating data by call_id...")
+
+      cols_to_agg <- c()
+      if (run_covariates == 1) {
+        cols_to_agg <- c(cols_to_agg, x_covariates)
+      } else {
+        cols_to_agg <- c(cols_to_agg, "dummy_cov")
+      }
+
+      if (run_treatment == 1) {
+        cols_to_agg <- c(cols_to_agg, treatment)
+      } else {
+        cols_to_agg <- c(cols_to_agg, "dummy_treat")
+      }    
+      
       agg_data <- data |>
         dplyr::group_by(!!dplyr::sym(call_id)) |>
         dplyr::summarize(
           k = sum(!!dplyr::sym(y_rating), na.rm = TRUE),
           N = dplyr::n(),
-          # Assumes covariates and treatment are constant for a given call_id
           dplyr::across(
-            c(all_of(x_covariates), !!dplyr::sym(treatment)),
+            c(all_of(cols_to_agg)),
             dplyr::first
           )
         ) |>
@@ -204,26 +248,30 @@ latentLogit <- R6::R6Class(
       private$..call_ids <- agg_data[[call_id]]
       
       # Prepare Stan Data List
-      if (length(x_covariates) == 1) {
-        X_matrix <- as.matrix(agg_data[, x_covariates])
+      if (run_covariates == 0) {
+        X_matrix <- as.matrix(agg_data[, "dummy_cov"])
       } else {
-        X_matrix <- agg_data[, x_covariates]
+         X_matrix <- as.matrix(agg_data[, x_covariates])
       }
+
+      treat_vec <- if(run_treatment == 0) agg_data$dummy_treat else agg_data[[treatment]]
       
       stan_data <- list(
         C = nrow(agg_data),
-        K = length(x_covariates),
+        K = K,
         X = X_matrix,
-        treat = agg_data[[treatment]],
+        treat = treat_vec,
         k = agg_data$k,
         N = agg_data$N,
         mean_alpha = mean_alpha,
         sd_alpha = sd_alpha,
-        mean_beta = rep(mean_beta, length(x_covariates)),
-        sd_beta = rep(sd_beta, length(x_covariates)),
+        mean_beta = mean_beta_vec,
+        sd_beta = sd_beta_vec,
         tau_mean = tau_mean,
         tau_sd = tau_sd,
-        run_estimation = 0 # Start with 0 for prior simulation
+        run_estimation = 0, # Start with 0 for prior simulation
+        run_covariates = run_covariates,
+        run_treatment = run_treatment
       )
       
       # Add data specific to model type
