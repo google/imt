@@ -37,6 +37,9 @@ data {
 
   // Flag for running estimation
   int<lower=0, upper=1> run_estimation;
+
+  int<lower=0, upper=1> run_covariates; // Flag for running covariates
+  int<lower=0, upper=1> run_treatment;  // Flag for running treatment
 }
 
 transformed data {
@@ -76,8 +79,18 @@ model {
 
   // Priors
   alpha ~ normal(mean_alpha, sd_alpha);
-  beta ~ normal(mean_beta, sd_beta);
-  tau ~ normal(tau_mean, tau_sd);
+  
+  if (run_covariates == 1) {
+    beta ~ normal(mean_beta, sd_beta);
+  } else {
+    beta ~ normal(0, 0.1); // Pin unused beta to 0
+  }
+
+  if (run_treatment == 1) {
+    tau ~ normal(tau_mean, tau_sd);
+  } else {
+    tau ~ normal(0, 0.1); // Pin unused tau to 0
+  }
 
   alpha_0 ~ normal(-1.5, 1);
   beta_0 ~ lognormal(0, 0.5);
@@ -86,7 +99,13 @@ model {
 
   // Likelihood
   if (run_estimation == 1) {
-    vector[C] theta_c = alpha + X_std * beta + tau * treat;
+    vector[C] theta_c = rep_vector(alpha, C);
+    if (run_covariates == 1) {
+      theta_c += X_std * beta;
+    }
+    if (run_treatment == 1) {
+      theta_c += tau * treat;
+    }
     for (c in 1:C) {
       // Calculate call-specific error rates directly from observed difficulty (capped at 0.5)
       epsilon_0_c = inv_logit(alpha_0 + beta_0 * d_obs[c]) / 2.0;
@@ -107,18 +126,46 @@ generated quantities {
   vector[C] prob_dissatisfied;
   matrix[C, 2] individualized_errors;
   
-  // Calculate theta for the OBSERVED treatment assignment
-  vector[C] theta_c_obs = alpha + X_std * beta + tau * treat;
+  // Calculate theta for the observed treatment assignment
+  vector[C] theta_c_obs = rep_vector(alpha, C);
   
   // Calculate potential outcomes for the ATE (eta)
-  vector[C] theta_c_treated = alpha + X_std * beta + tau; // All treated
-  vector[C] theta_c_control = alpha + X_std * beta;       // All control
+  vector[C] theta_c_treated;
+  vector[C] theta_c_control;
 
   real log_prob_if_dissatisfied;
   real log_prob_if_satisfied;
 
   real epsilon_0_c;
   real epsilon_1_c;
+
+  if (run_covariates == 1) {
+    theta_c_obs += X_std * beta;
+  }
+  if (run_treatment == 1) {
+    theta_c_obs += tau * treat;
+  }
+
+  // Build counterfactuals and eta
+  if (run_treatment == 1) {
+    // Build control (no treatment)
+    theta_c_control = rep_vector(alpha, C);
+    if (run_covariates == 1) {
+      theta_c_control += X_std * beta;
+    }
+    
+    // Build treated
+    theta_c_treated = theta_c_control + tau;
+    
+    // Calculate ATE
+    eta = mean(inv_logit(theta_c_treated)) - mean(inv_logit(theta_c_control));
+    
+  } else {
+    // If no treatment, ATE is 0 and counterfactuals are just the observed
+    eta = 0.0;
+    theta_c_control = theta_c_obs;
+    theta_c_treated = theta_c_obs;
+  }
 
   for (c in 1:C) {
     epsilon_0_c = inv_logit(alpha_0 + beta_0 * d_obs[c]) / 2.0; // Using the fix from above
@@ -135,7 +182,4 @@ generated quantities {
                                  
     prob_dissatisfied[c] = exp(log_prob_if_dissatisfied - log_sum_exp(log_prob_if_dissatisfied, log_prob_if_satisfied));
   }
-  
-  // ATE calculation is clearer with explicit potential outcomes
-  eta = mean(inv_logit(theta_c_treated)) - mean(inv_logit(theta_c_control));
 }
