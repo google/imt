@@ -38,6 +38,9 @@ data {
 
   // Flag for running estimation (0: prior only, 1: full)
   int<lower=0, upper=1> run_estimation;
+
+  int<lower=0, upper=1> run_covariates; // Flag for running covariates
+  int<lower=0, upper=1> run_treatment;  // Flag for running treatment
 }
 
 transformed data {
@@ -67,8 +70,19 @@ parameters {
 model {
   // --- Priors ---
   alpha ~ normal(mean_alpha, sd_alpha);
-  beta ~ normal(mean_beta, sd_beta);
-  tau ~ normal(tau_mean, tau_sd);
+
+  if (run_covariates == 1) {
+    beta ~ normal(mean_beta, sd_beta);
+  } else {
+    beta ~ normal(0, 0.1); // Pin unused beta to 0
+  }
+
+  if (run_treatment == 1) {
+    tau ~ normal(tau_mean, tau_sd);
+  } else {
+    tau ~ normal(0, 0.1); // Pin unused tau to 0
+  }
+
 
   epsilon_0 ~ beta(epsilon0_alpha, epsilon0_beta);
   epsilon_1 ~ beta(epsilon1_alpha, epsilon1_beta);
@@ -76,7 +90,13 @@ model {
   // --- Likelihood (Mixture Model) ---
   if (run_estimation == 1) {
     // Linear predictor for the latent probability of dissatisfaction
-    vector[C] theta_c = alpha + X_std * beta + tau * treat;
+    vector[C] theta_c = rep_vector(alpha, C);
+    if (run_covariates == 1) {
+      theta_c += X_std * beta;
+    }
+    if (run_treatment == 1) {
+      theta_c += tau * treat;
+    }
 
     // Log-likelihood for each call
     for (c in 1:C) {
@@ -108,9 +128,33 @@ generated quantities {
   real eta;
 
   // Linear predictors
-  vector[C] theta_c_treated = alpha + X_std * beta + tau * 1;
-  vector[C] theta_c_control = alpha + X_std * beta;
-  vector[C] theta_c_observed = alpha + X_std * beta + tau * treat;
+  vector[C] theta_c_treated;
+  vector[C] theta_c_control;
+  vector[C] theta_c_observed = rep_vector(alpha, C);
+
+  if (run_covariates == 1) {
+    theta_c_observed += X_std * beta;
+  }
+  
+  if (run_treatment == 1) {
+    theta_c_observed += tau * treat;
+    
+    // Build control (no treatment)
+    theta_c_control = rep_vector(alpha, C);
+    if (run_covariates == 1) {
+      theta_c_control += X_std * beta;
+    }
+    // Build treated
+    theta_c_treated = theta_c_control + tau;
+    
+    eta = mean(inv_logit(theta_c_treated)) - mean(inv_logit(theta_c_control));
+    
+  } else {
+    // If no treatment, ATE is 0 and counterfactuals are just the observed
+    eta = 0.0;
+    theta_c_control = theta_c_observed;
+    theta_c_treated = theta_c_observed;
+  }
 
   for (c in 1:C) {
     // Calculate P(D_c=1 | R_c, params) using Bayes' rule
@@ -123,7 +167,4 @@ generated quantities {
     // prob = exp(A) / (exp(A) + exp(B)) = 1 / (1 + exp(B - A)) = inv_logit(A - B)
     prob_dissatisfied[c] = inv_logit(log_prob_if_dissatisfied - log_prob_if_satisfied);
   }
-
-  // Calculate ATE on the probability of dissatisfaction
-  eta = mean(inv_logit(theta_c_treated)) - mean(inv_logit(theta_c_control));
 }
